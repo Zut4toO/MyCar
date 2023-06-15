@@ -182,28 +182,16 @@ app.post('/car/csv', uploadCSV.single('car_csv'), async (req, res) => {
       } else {
         csvJson = data;
 
-        console.log(csvData);
-        console.log(csvJson);
+        //console.log(csvData);
+        //console.log(csvJson);
 
-        const updatedJson = csvJson.map((obj) => {
-          const updatedObj = {};
-          for (const key in obj) {
-            const newKey = key.replace(/['"]+/g, ''); // Remove quotes from key
-            updatedObj[newKey] = obj[key];
-          }
-          return updatedObj;
-        });
-
-        console.log(updatedJson);
-
+        // Check if objNr already exists in DB
         const objNrArray = csvJson.map((car) => {
           return car.ObjNr;
         });
 
         const sqlString = "'" + objNrArray.join("', '") + "'";
-
         matchObjNr = `SELECT objNr FROM mycardb WHERE objNr IN (${sqlString})`;
-
         const fetchMatchingCars = await pool.query(matchObjNr);
 
         const matchedObjNrArray = fetchMatchingCars.map((car) => {
@@ -214,13 +202,15 @@ app.post('/car/csv', uploadCSV.single('car_csv'), async (req, res) => {
           (item) => !matchedObjNrArray.includes(item.ObjNr)
         );
 
+        // Insert new, unique cars into DB
         async function uploadCarsToDatabase() {
+          // Array of SQL queries
           const sqlQueries = checkedCars.map((car) => {
             const { ObjNr, Brand, Model, kW, Manufactured, Price } = car;
             return `INSERT INTO mycardb (objNr, brand, model, kw, manufactured, price)
                     VALUES ('${ObjNr}', '${Brand}', '${Model}', ${kW}, '${Manufactured}', '${Price}')`;
           });
-
+          //console.log(sqlQueries);
           try {
             for (let sql of sqlQueries) {
               await pool.query(sql);
@@ -232,6 +222,7 @@ app.post('/car/csv', uploadCSV.single('car_csv'), async (req, res) => {
 
         uploadCarsToDatabase();
 
+        // Response show how many cars were created
         res.status(200).json({
           message: `${checkedCars.length} / ${csvJson.length} cars were created`,
         });

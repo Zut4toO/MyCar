@@ -3,7 +3,7 @@
     <h2 class="text-gray-100 font-semibold text-3xl mb-8">Produktliste</h2>
     <div class="flex justify-center">
       <table class="table-auto">
-        <thead class="bg-red-500 border border-red-500">
+        <thead class="bg-red-600 border border-red-500">
           <tr class="rounded-3xl">
             <th class="px-4 py-2">#</th>
             <th class="px-4 py-2">Hersteller</th>
@@ -14,8 +14,16 @@
             <th class="px-4 py-2">Bearbeiten</th>
           </tr>
         </thead>
-        <tbody v-for="car in cars" :key="car.objNr">
-          <tr>
+        <tbody>
+          <tr
+            v-for="(car, index) in cars"
+            :key="car.objNr"
+            :class="
+              index % 2 === 1
+                ? 'bg-zinc-400 hover:bg-blue-500 transition duration-300'
+                : 'bg-zinc-500 hover:bg-blue-500 transition duration-300'
+            "
+          >
             <td class="border px-4 py-2">{{ car.objNr }}</td>
             <td class="border px-4 py-2">{{ car.brand }}</td>
             <td class="border px-4 py-2">{{ car.model }}</td>
@@ -84,14 +92,14 @@
                           className="flex items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t bg-gray-600"
                         >
                           <h3 className="text-3xl font-semibold text-red-500">
-                            Produkt löschen
+                            Auto entfernen
                           </h3>
                         </div>
                         <div className="relative p-6 flex-auto bg-gray-600">
                           <p
                             className="my-4 text-white text-lg leading-relaxed"
                           >
-                            Möchtest du dieses Produkt wirklich löschen?
+                            Möchtest du dieses Auto wirklich entfernen?
                           </p>
                         </div>
                         <div
@@ -109,7 +117,7 @@
                             type="button"
                             @click="confirmDelete(carId)"
                           >
-                            Produkt löschen
+                            Auto entfernen
                           </button>
                         </div>
                       </div>
