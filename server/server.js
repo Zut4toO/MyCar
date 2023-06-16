@@ -4,8 +4,8 @@ const mariadb = require('mariadb');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs-extra');
-const csv = require('csv');
-const { match } = require('assert');
+const csvtojsonV2 = require('csvtojson');
+
 require('dotenv').config();
 
 const app = express();
@@ -171,20 +171,27 @@ app.post('/car/csv', uploadCSV.single('car_csv'), async (req, res) => {
     if (!req.file) {
       throw new Error("Missing required field: 'car_csv'");
     }
-    let csvJson;
     // Convert raw buffer data to string
     const csvData = req.file.buffer.toString();
 
-    // Parse CSV data to JSON; first row is header;
-    csv.parse(csvData, { delimiter: ';', columns: true }, async (err, data) => {
-      if (err) {
-        console.error('CSV parsing error:', err);
-      } else {
-        csvJson = data;
+    const convertCsvToJson = async (csvData) => {
+      try {
+        const csvJson = await csvtojsonV2({
+          delimiter: ';',
+          noheader: false,
+          output: 'json',
+        }).fromString(csvData);
+        return csvJson;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    };
 
-        //console.log(csvData);
+    const processData = async () => {
+      try {
+        const csvJson = await convertCsvToJson(csvData);
         //console.log(csvJson);
-
         // Check if objNr already exists in DB
         const objNrArray = csvJson.map((car) => {
           return car.ObjNr;
@@ -210,24 +217,29 @@ app.post('/car/csv', uploadCSV.single('car_csv'), async (req, res) => {
             return `INSERT INTO mycardb (objNr, brand, model, kw, manufactured, price)
                     VALUES ('${ObjNr}', '${Brand}', '${Model}', ${kW}, '${Manufactured}', '${Price}')`;
           });
-          //console.log(sqlQueries);
           try {
             for (let sql of sqlQueries) {
               await pool.query(sql);
             }
           } catch (error) {
             console.error('New Car creation failed:', error);
+            throw error;
           }
         }
 
-        uploadCarsToDatabase();
+        await uploadCarsToDatabase();
 
         // Response show how many cars were created
         res.status(200).json({
           message: `${checkedCars.length} / ${csvJson.length} cars were created`,
         });
+      } catch (err) {
+        console.error(err);
+        res.status(500).send('New Car creation failed');
       }
-    });
+    };
+
+    await processData(); // Wait for the function to complete
   } catch (err) {
     console.error(err);
     res.status(500).send('New Car creation failed');
