@@ -198,25 +198,33 @@ app.post('/car/csv', uploadCSV.single('car_csv'), async (req, res) => {
         });
 
         const sqlString = "'" + objNrArray.join("', '") + "'";
+        //console.log(sqlString);
         matchObjNr = `SELECT objNr FROM mycardb WHERE objNr IN (${sqlString})`;
         const fetchMatchingCars = await pool.query(matchObjNr);
+
+        console.log(fetchMatchingCars);
 
         const matchedObjNrArray = fetchMatchingCars.map((car) => {
           return car.objNr;
         });
 
+        console.log(matchedObjNrArray);
+
         const checkedCars = csvJson.filter(
           (item) => !matchedObjNrArray.includes(item.ObjNr)
         );
 
+        console.log(checkedCars);
+
         // Insert new, unique cars into DB
-        async function uploadCarsToDatabase() {
+        const uploadCarsToDatabase = async () => {
           // Array of SQL queries
           const sqlQueries = checkedCars.map((car) => {
             const { ObjNr, Brand, Model, kW, Manufactured, Price } = car;
             return `INSERT INTO mycardb (objNr, brand, model, kw, manufactured, price)
                     VALUES ('${ObjNr}', '${Brand}', '${Model}', ${kW}, '${Manufactured}', '${Price}')`;
           });
+          console.log(sqlQueries);
           try {
             for (let sql of sqlQueries) {
               await pool.query(sql);
@@ -225,7 +233,7 @@ app.post('/car/csv', uploadCSV.single('car_csv'), async (req, res) => {
             console.error('New Car creation failed:', error);
             throw error;
           }
-        }
+        };
 
         await uploadCarsToDatabase();
 
@@ -286,7 +294,7 @@ app.patch('/car/:id', upload.single('car_image'), async (req, res) => {
       );
     }
 
-    const sql = `UPDATE mycardb SET objNr = '${objNr}', brand = '${brand}', model = '${model}', kw = '${kw}', manufactured = '${manufactured}', price = '${price}', image_path ='${req.file?.filename}'  WHERE id = ${req.params.id}`;
+    const sql = `UPDATE mycardb SET objNr = '${objNr}', brand = '${brand}', model = '${model}', kw = '${kw}', manufactured = '${manufactured}', price = '${price}', image_path ='${req.file?.filename}' WHERE id = ${req.params.id}`;
 
     await pool.query(sql);
     console.log('Update successful');

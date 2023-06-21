@@ -82,10 +82,10 @@
                   @click="setShowModal(false)"
                 >
                   <div class="bg-gray-600 rounded-lg p-6" @click.stop>
-                    <div className="backdrop" @click="setShowModal(false)">
-                      <div className="relative w-auto my-6 mx-auto max-w-3xl">
+                    <div>
+                      <div className="w-auto my-6 mx-auto max-w-3xl">
                         <div
-                          className=" rounded-lg relative flex flex-col w-full bg-white outline-none focus:outline-none"
+                          className=" rounded-lg flex flex-col w-full bg-white outline-none focus:outline-none"
                         >
                           <div
                             className="flex items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t bg-gray-600"
@@ -94,7 +94,7 @@
                               Auto entfernen
                             </h3>
                           </div>
-                          <div className="relative p-6 flex-auto bg-gray-600">
+                          <div className="p-6 flex-auto bg-gray-600">
                             <p
                               className="my-4 text-white text-lg leading-relaxed"
                             >
