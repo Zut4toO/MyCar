@@ -141,7 +141,7 @@ export default {
       formData.append('car_image', this.formdata.car_image);
 
       axios
-        .patch(
+        .put(
           'http://localhost:5000/car/' + this.$route.params.id,
           this.formdata,
           {

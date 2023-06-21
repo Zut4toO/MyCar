@@ -255,7 +255,7 @@ app.post('/car/csv', uploadCSV.single('car_csv'), async (req, res) => {
 });
 
 // Update Car
-app.patch('/car/:id', upload.single('car_image'), async (req, res) => {
+app.put('/car/:id', upload.single('car_image'), async (req, res) => {
   try {
     const { objNr, brand, model, kw, manufactured, price } = req.body;
     if (!objNr) {
@@ -277,12 +277,19 @@ app.patch('/car/:id', upload.single('car_image'), async (req, res) => {
       throw new Error("Missing required field: 'price'");
     }
     console.log('file', req.file);
+    let fetchImagePath;
+
+    try {
+      // Find current Image Path
+      let findImagePath = `SELECT image_path FROM mycardb WHERE id = ${req.params.id}`;
+      fetchImagePath = await pool.query(findImagePath);
+      console.log(fetchImagePath[0].image_path);
+    } catch (err) {
+      console.error('Unable to fetch Image', err);
+    }
 
     // Find current Image Path
     if (req.file) {
-      let findImagePath = `SELECT image_path FROM mycardb WHERE id = ${req.params.id}`;
-      const fetchImagePath = await pool.query(findImagePath);
-      // Remove current Image
       fs.unlink(
         `uploads/images/${fetchImagePath[0]?.image_path}`,
         (unlinkErr) => {
@@ -294,8 +301,11 @@ app.patch('/car/:id', upload.single('car_image'), async (req, res) => {
       );
     }
 
-    const sql = `UPDATE mycardb SET objNr = '${objNr}', brand = '${brand}', model = '${model}', kw = '${kw}', manufactured = '${manufactured}', price = '${price}', image_path ='${req.file?.filename}' WHERE id = ${req.params.id}`;
+    const sql = `UPDATE mycardb SET objNr = '${objNr}', brand = '${brand}', model = '${model}', kw = '${kw}', manufactured = '${manufactured}', price = '${price}', image_path ='${
+      req.file?.filename ? req.file.filename : fetchImagePath[0]?.image_path
+    }' WHERE id = ${req.params.id}`;
 
+    console.log(sql);
     await pool.query(sql);
     console.log('Update successful');
     res.status(200).send('Update successful');
